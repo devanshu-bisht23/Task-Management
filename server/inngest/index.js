@@ -8,7 +8,7 @@ export const inngest = new Inngest({ id: "project-managemnet" });
 
 const syncUserCreation = inngest.createFunction(
     {id: 'sync-user-from-clerk'},
-    {event: 'clerk/user.creation'},
+    {event: 'clerk/user.created'},
     async ({event})=>{
         const {data} = event
         await prisma.user.create({
