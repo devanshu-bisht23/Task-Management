@@ -2,28 +2,35 @@ import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import { Outlet } from 'react-router-dom'
+import { CreateOrganization, SignIn, useAuth, useUser } from '@clerk/clerk-react'
 import { useDispatch, useSelector } from 'react-redux'
+import { fetchWorkspaces } from '../features/workspaceSlice'
 import { loadTheme } from '../features/themeSlice'
 import { Loader2Icon } from 'lucide-react'
-import { useUser, SignIn } from '@clerk/clerk-react'
 
 const Layout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-    const { loading } = useSelector((state) => state.workspace)
+    const { user, isLoaded } = useUser()
+    const { workspaces, loading } = useSelector((state) => state.workspace)
+    const { getToken } = useAuth()
     const dispatch = useDispatch()
-
-    //get the user from useUser
-    const {user, isLoaded} = useUser();
 
     // Initial load of theme
     useEffect(() => {
         dispatch(loadTheme())
     }, [])
 
-    if(!user){ // wen user is not logged in
+    // Initial load of workspaces
+    useEffect(() => {
+        if (isLoaded && user && workspaces.length === 0) {
+            dispatch(fetchWorkspaces({ getToken }))
+        }
+    }, [user, isLoaded])
+
+    if (!user) {
         return (
-            <div className='flex justify-center items-center h-screen bg-white dark:bg-zinc-950'>
-                <SignIn/>
+            <div className="flex justify-center items-center h-screen bg-white dark:bg-zinc-950">
+                <SignIn />
             </div>
         )
     }
@@ -33,6 +40,14 @@ const Layout = () => {
             <Loader2Icon className="size-7 text-blue-500 animate-spin" />
         </div>
     )
+
+    if (user && workspaces.length === 0) {
+        return (
+            <div className="min-h-screen flex justify-center items-center">
+                <CreateOrganization />
+            </div>
+        )
+    }
 
     return (
         <div className="flex bg-white dark:bg-zinc-950 text-gray-900 dark:text-slate-100">
